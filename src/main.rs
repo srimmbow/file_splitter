@@ -1,8 +1,8 @@
 use num_format::{Locale, ToFormattedString};
 use std::env;
 use std::fs::{self, File};
-use std::io::{self, Read};
-use std::path::Path;
+use std::io::{self, BufReader, Read};
+use std::path::{Path, PathBuf};
 
 type FileSize = usize;
 
@@ -48,16 +48,22 @@ fn main() -> io::Result<()> {
 
     // Start reading files, starting from args[2]
     for file_path in &args[2..] {
-        let file_result = File::open(file_path);
-        if let Err(_e) = file_result {
-            eprintln!("Failed to open file: '{}'", file_path);
-            continue;
-        }
-        // No error, file exists
-        let mut file = file_result.unwrap();
+        let mut file = match File::open(file_path) {
+            Ok(f) => BufReader::new(f),
+            Err(_) => {
+                eprintln!("Failed to open file: '{}'", file_path);
+                continue;
+            }
+        };
 
         let path = Path::new(file_path);
-        let file_name = path.file_name().unwrap().to_string_lossy();
+        let file_name = match path.file_name() {
+            Some(name) => name.to_string_lossy(),
+            None => {
+                eprintln!("Invalid file path: '{}'", file_path);
+                continue;
+            }
+        };
         let sliced_file_folder_path = format!("{}_sliced", file_name);
 
         let dir_path = Path::new(&sliced_file_folder_path);
@@ -81,10 +87,10 @@ fn main() -> io::Result<()> {
                 break;
             }
 
-            fs::write(
-                format!("{}/{}.bin", sliced_file_folder_path, i),
-                &buf[..bytes_read],
-            )?;
+            let mut out_path = PathBuf::from(&sliced_file_folder_path);
+            out_path.push(format!("{}.bin", i));
+
+            fs::write(out_path, &buf[..bytes_read])?;
 
             i += 1;
         }
@@ -93,4 +99,11 @@ fn main() -> io::Result<()> {
     }
 
     Ok(())
+}
+
+#[test]
+fn parse_size_ok() {
+    assert_eq!(parse_size("1022").unwrap(), 1022);
+    assert_eq!(parse_size("2222").unwrap(), 2222);
+    assert_eq!(parse_size("123123123").unwrap(), 123123123);
 }
