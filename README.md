@@ -17,6 +17,7 @@ cargo build --release
 ```
 
 Binaries will be created in `target/release/`:
+
 - `file-slicer` - splits files into chunks
 - `file-assembler` - reassembles chunks back into original files
 
@@ -29,11 +30,13 @@ file-slicer <chunk_size_bytes> <file> [more_files...]
 ```
 
 **Example:** Split `video.mp4` into 10MB chunks
+
 ```bash
 file-slicer 10485760 video.mp4
 ```
 
 This creates a folder `video.mp4_sliced/` containing:
+
 ```
 video.mp4_sliced/
 ├── 0.bin
@@ -49,6 +52,7 @@ file-assembler <sliced_folder> <output_file>
 ```
 
 **Example:** Reassemble the chunks
+
 ```bash
 file-assembler video.mp4_sliced video_restored.mp4
 ```
@@ -63,3 +67,7 @@ file-assembler video.mp4_sliced video_restored.mp4
 ## Dependencies
 
 - `num-format` - Number formatting for error messages
+
+## Contributing
+
+Feel free to contribute
